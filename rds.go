@@ -1,9 +1,12 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+
 	"github.com/gophercloud/utils/client"
 	gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
@@ -12,13 +15,11 @@ import (
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
-	"net/http"
-	"os"
+	"k8s.io/klog/v2"
 )
 
 const (
-	AppVersion = "0.0.3"
+	AppVersion = "0.0.4"
 	RdsYaml    = "rds.yaml"
 )
 
@@ -58,26 +59,18 @@ type Volume struct {
 	Size int    `json:"size" required:"true"`
 }
 
-
-func funcError(e string) {
-        msg := errors.New(e)
-	fmt.Println("ERROR:", msg)
-	os.Exit(1)
-	return
-}
-
 func secgroupGet(client *gophercloud.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
 
-	pages,err := groups.List(client, *opts).AllPages()
+	pages, err := groups.List(client, *opts).AllPages()
 	if err != nil {
 		return nil, err
 	}
 	n, err := groups.ExtractGroups(pages)
 	if len(n) == 0 {
-		funcError("No SecurityGroups found")
+		klog.Exitf("no secgroup found")
 	}
 
-	return &n[0],nil
+	return &n[0], nil
 }
 
 func subnetGet(client *gophercloud.ServiceClient, opts *subnets.ListOpts) (*subnets.Subnet, error) {
@@ -87,7 +80,7 @@ func subnetGet(client *gophercloud.ServiceClient, opts *subnets.ListOpts) (*subn
 		return nil, err
 	}
 	if len(n) == 0 {
-		funcError("No Subnet found")
+		klog.Exitf("no subnet found")
 	}
 
 	return &n[0], nil
@@ -101,7 +94,7 @@ func vpcGet(client *gophercloud.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, 
 	}
 
 	if len(n) == 0 {
-		funcError("No VPC found")
+		klog.Exitf("no vpc found")
 	}
 
 	return &n[0], nil
@@ -134,17 +127,17 @@ func rdsCreate(netclient1 *gophercloud.ServiceClient, netclient2 *gophercloud.Se
 
 	g, err := secgroupGet(netclient2, &groups.ListOpts{Name: c.SecurityGroup})
 	if err != nil {
-		panic(err)
+		klog.Exitf("error getting secgroup state: %v", err)
 	}
 
 	s, err := subnetGet(netclient1, &subnets.ListOpts{Name: c.Subnet})
 	if err != nil {
-		panic(err)
+		klog.Exitf("error getting subnet state: %v", err)
 	}
 
 	v, err := vpcGet(netclient1, &vpcs.ListOpts{Name: c.Vpc})
 	if err != nil {
-		panic(err)
+		klog.Exitf("error getting vpc state: %v", err)
 	}
 
 	createOpts := instances.CreateRdsOpts{
@@ -178,22 +171,22 @@ func rdsCreate(netclient1 *gophercloud.ServiceClient, netclient2 *gophercloud.Se
 	createResult := instances.Create(client, createOpts)
 	r, err := createResult.Extract()
 	if err != nil {
-		panic(err)
+		klog.Exitf("error creating rds instance: %v", err)
 	}
 	jobResponse, err := createResult.ExtractJobResponse()
 	if err != nil {
-		panic(err)
+		klog.Exitf("error creating rds job: %v", err)
 	}
 
 	if err := instances.WaitForJobCompleted(client, int(1800), jobResponse.JobID); err != nil {
-		panic(err)
+		klog.Exitf("error getting rds job: %v", err)
 	}
 
 	rdsInstance, err := rdsGet(client, r.Instance.Id)
 
 	fmt.Println(rdsInstance.PrivateIps[0])
 	if err != nil {
-		panic(err)
+		klog.Exitf("error getting rds state: %v", err)
 	}
 
 	return
@@ -203,12 +196,12 @@ func (c *conf) getConf() *conf {
 
 	yfile, err := ioutil.ReadFile(RdsYaml)
 	if err != nil {
-		panic(err)
+		klog.Exitf("error reading yaml file: %v", err)
 	}
 
 	err = yaml.Unmarshal(yfile, c)
 	if err != nil {
-		panic(err)
+		klog.Exitf("error unmarshal yaml file: %v", err)
 	}
 
 	return c
@@ -249,12 +242,12 @@ func main() {
 
 	opts, err := openstack.AuthOptionsFromEnv()
 	if err != nil {
-		panic(err)
+		klog.Exitf("error getting auth from env: %v", err)
 	}
 
 	provider, err := openstack.AuthenticatedClient(opts)
 	if err != nil {
-		panic(err)
+		klog.Exitf("unable to initialize openstack client: %v", err)
 	}
 
 	if os.Getenv("OS_DEBUG") != "" {
@@ -270,11 +263,11 @@ func main() {
 	network2, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{})
 	rds, err := openstack.NewRDSV3(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		panic(err)
+		klog.Exitf("unable to initialize rds client: %v", err)
 	}
 
 	rdsCreate(network1, network2, rds, &instances.CreateRdsOpts{})
 	if err != nil {
-		panic(err)
+		klog.Exitf("rds creating failed: %v", err)
 	}
 }
