@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/gophercloud/utils/client"
-	gophercloud "github.com/opentelekomcloud/gophertelekomcloud"
+	"github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
@@ -59,7 +59,7 @@ type Volume struct {
 	Size int    `json:"size" required:"true"`
 }
 
-func secgroupGet(client *gophercloud.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
+func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
 
 	pages, err := groups.List(client, *opts).AllPages()
 	if err != nil {
@@ -73,7 +73,7 @@ func secgroupGet(client *gophercloud.ServiceClient, opts *groups.ListOpts) (*gro
 	return &n[0], nil
 }
 
-func subnetGet(client *gophercloud.ServiceClient, opts *subnets.ListOpts) (*subnets.Subnet, error) {
+func subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnets.Subnet, error) {
 
 	n, err := subnets.List(client, *opts)
 	if err != nil {
@@ -86,7 +86,7 @@ func subnetGet(client *gophercloud.ServiceClient, opts *subnets.ListOpts) (*subn
 	return &n[0], nil
 }
 
-func vpcGet(client *gophercloud.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, error) {
+func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, error) {
 
 	n, err := vpcs.List(client, *opts)
 	if err != nil {
@@ -100,7 +100,7 @@ func vpcGet(client *gophercloud.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, 
 	return &n[0], nil
 }
 
-func rdsGet(client *gophercloud.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
+func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
 
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
@@ -120,7 +120,7 @@ func rdsGet(client *gophercloud.ServiceClient, rdsId string) (*instances.RdsInst
 	return &n.Instances[0], nil
 }
 
-func rdsCreate(netclient1 *gophercloud.ServiceClient, netclient2 *gophercloud.ServiceClient, client *gophercloud.ServiceClient, opts *instances.CreateRdsOpts) {
+func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts) {
 
 	var c conf
 	c.getConf()
@@ -259,9 +259,9 @@ func main() {
 		}
 	}
 
-	network1, err := openstack.NewNetworkV1(provider, gophercloud.EndpointOpts{})
-	network2, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{})
-	rds, err := openstack.NewRDSV3(provider, gophercloud.EndpointOpts{})
+	network1, err := openstack.NewNetworkV1(provider, golangsdk.EndpointOpts{})
+	network2, err := openstack.NewNetworkV2(provider, golangsdk.EndpointOpts{})
+	rds, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
 	if err != nil {
 		klog.Exitf("unable to initialize rds client: %v", err)
 	}
