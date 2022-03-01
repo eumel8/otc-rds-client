@@ -30,7 +30,9 @@ jobs:
         run:
           go test -v ./... -covermode=count -coverprofile=coverage.out
           go tool cover -func=coverage.out -o=coverage.out
-          echo "cat"
+
+      - name: Check coverage.out
+        run:
           cat coverage.out
 
       - name: Go Coverage Badge  # Pass the `coverage.out` output to this action
