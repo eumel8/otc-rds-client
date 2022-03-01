@@ -1,4 +1,4 @@
-module rds.go
+module rds
 
 go 1.17
 
