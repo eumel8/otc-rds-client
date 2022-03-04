@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/opentelekomcloud/gophertelekomcloud/acceptance/tools"
 	fake "github.com/opentelekomcloud/gophertelekomcloud/testhelper/client"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	th "github.com/opentelekomcloud/gophertelekomcloud/testhelper"
 )
 
@@ -66,7 +68,7 @@ const SubnetListResponse = `
 {
     "subnets": [
         {
-            "name": "default",
+            "name": "golang",
             "cidr": "172.16.236.0/24",
             "id": "011fc878-5521-4654-a1ad-f5b0b5820302",
             "enable_dhcp": true,
@@ -94,7 +96,7 @@ const VpcListResponse = `
     "vpcs": [
         {
             "id": "13551d6b-755d-4757-b956-536f674975c0",
-            "name": "default",
+            "name": "golang",
             "description": "test",
             "cidr": "172.16.0.0/16",
             "status": "OK",
@@ -258,7 +260,67 @@ const RdsGetResponseSingle = `
 	"total_count": 1
 }
 `
-
+const RdsCreateResponse = `
+{
+  "instance":{
+           "id": "dsfae23fsfdsae3435in01",
+           "name": "default",
+           "datastore": {
+             "type": "MySQL",
+             "version": "5.6"
+           },
+           "ha": {
+             "mode": "ha",
+             "replication_mode": "semisync"
+           },
+           "flavor_ref": "rds.mysql.s1.large.ha",
+           "volume": {
+               "type": "ULTRAHIGH",
+               "size": 100
+           },
+           "disk_encryption_id":  "2gfdsh-844a-4023-a776-fc5c5fb71fb4",
+           "region": "eu-de",
+           "availability_zone": "eu-de-01,en-de-02",
+           "vpc_id": "490a4a08-ef4b-44c5-94be-3051ef9e4fce",
+           "subnet_id": "0e2eda62-1d42-4d64-a9d1-4e9aa9cd994f",
+           "security_group_id": "2a1f7fc8-3307-42a7-aa6f-42c8b9b8f8c5",
+           "port": "3306",
+           "backup_strategy": {
+             "start_time": "08:15-09:15",
+             "keep_days": 3
+           },
+           "configuration_id": "452408-44c5-94be-305145fg",
+           "charge_info": {
+                   "charge_mode": "postPaid"
+           }
+  },
+  "job_id": "dff1d289-4d03-4942-8b9f-463ea07c000d"
+}
+`
+const RdsJobResponse = `
+{
+  "job": {
+    "created": "2022-03-04T21:38:47+0000",
+    "entities": {
+      "instance": {
+        "datastore": {
+          "type": "mysql",
+          "version": "5.6"
+        },
+        "type": "Ha"
+      }
+    },
+    "id": "dff1d289-4d03-4942-8b9f-463ea07c000d",
+    "instance": {
+      "id": "16fa025c33b444a6bb2f04e705767adbin01",
+      "name": "default"
+    },
+    "name": "CreateMysqlSingleHAInstance",
+    "process": "100%",
+    "status": "Completed"
+  }
+}
+`
 func Test_secgroupGet(t *testing.T) {
 
 	th.SetupHTTP()
@@ -297,10 +359,10 @@ func Test_subnetGet(t *testing.T) {
 		_, _ = fmt.Fprint(w, SubnetListResponse)
 	})
 
-	sg, err := subnetGet(fake.ServiceClient(),  &subnets.ListOpts{Name: "default"})
+	sg, err := subnetGet(fake.ServiceClient(),  &subnets.ListOpts{Name: "golang"})
 	th.AssertNoErr(t, err)
 
-	th.AssertEquals(t, "default", sg.Name)
+	th.AssertEquals(t, "golang", sg.Name)
 	th.AssertEquals(t, "011fc878-5521-4654-a1ad-f5b0b5820302", sg.ID)
 
 }
@@ -320,7 +382,7 @@ func Test_vpcGet(t *testing.T) {
 		_, _ = fmt.Fprint(w, VpcListResponse)
 	})
 
-	sg, err := vpcGet(fake.ServiceClient(),  &vpcs.ListOpts{Name: "default"})
+	sg, err := vpcGet(fake.ServiceClient(),  &vpcs.ListOpts{Name: "golang"})
 	th.AssertNoErr(t, err)
 
 	th.AssertEquals(t, "default", sg.Name)
@@ -348,6 +410,107 @@ func Test_rdsGet(t *testing.T) {
 
 	th.AssertEquals(t, "default", sg.Name)
 	th.AssertEquals(t, "ed7cc6166ec24360a5ed5c5c9c2ed726in01", sg.Id)
+	tools.PrintResource(t, sg)
+
+}
+
+func MockRdsResponse(t *testing.T) {
+
+	th.Mux.HandleFunc("/instances", func(w http.ResponseWriter, r *http.Request) {
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+		switch r.Method {
+		case "GET":
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprint(w, RdsGetResponse)
+		case "POST":
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			_, _ = fmt.Fprint(w, RdsCreateResponse)
+		}
+	})
+}
+
+func Test_rdsCreate(t *testing.T) {
+
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	MockRdsResponse(t)
+
+	th.Mux.HandleFunc("/security-groups", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "GET")
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		_, _ = fmt.Fprint(w, SecurityGroupListResponse)
+	})
+
+	th.Mux.HandleFunc("/subnets", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "GET")
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		_, _ = fmt.Fprint(w, SubnetListResponse)
+	})
+
+	th.Mux.HandleFunc("/vpcs", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "GET")
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		_, _ = fmt.Fprint(w, VpcListResponse)
+	})
+
+	th.Mux.HandleFunc("/jobs", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "GET")
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		_, _ = fmt.Fprint(w, RdsJobResponse)
+	})
+
+	RdsCreateOpts := &instances.CreateRdsOpts{
+		Name:             "default",
+		Port:             "3306",
+		Password:         "acc-test-password1!",
+		BackupStrategy: &instances.BackupStrategy{
+			StartTime: "08:15-09:15",
+			KeepDays:  12,
+		},
+		FlavorRef:        "rds.mysql.s1.large.ha",
+		Region:           "eu-de",
+		AvailabilityZone: "eu-de-01,eu-de-02",
+		VpcId:            "490a4a08-ef4b-44c5-94be-3051ef9e4fce",
+		SubnetId:         "0e2eda62-1d42-4d64-a9d1-4e9aa9cd994f",
+		SecurityGroupId:  "2a1f7fc8-3307-42a7-aa6f-42c8b9b8f8c5",
+		Volume: &instances.Volume{
+			Type: "ULTRAHIGH",
+			Size: 100,
+		},
+		Datastore: &instances.Datastore{
+			Type:    "MySQL",
+			Version: "5.6",
+		},
+		Ha: &instances.Ha{
+			Mode:            "ha",
+			ReplicationMode: "semisync",
+		},
+	}
+	err := rdsCreate(fake.ServiceClient(), fake.ServiceClient(), fake.ServiceClient(), RdsCreateOpts)
+	th.AssertNoErr(t, err)
+
+	//th.AssertEquals(t, "default", sg.Name)
+	//th.AssertEquals(t, "ed7cc6166ec24360a5ed5c5c9c2ed726in01", sg.Id)
+	//tools.PrintResource(t, sg)
 
 }
 
