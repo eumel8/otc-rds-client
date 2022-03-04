@@ -385,7 +385,7 @@ func Test_vpcGet(t *testing.T) {
 	sg, err := vpcGet(fake.ServiceClient(),  &vpcs.ListOpts{Name: "golang"})
 	th.AssertNoErr(t, err)
 
-	th.AssertEquals(t, "default", sg.Name)
+	th.AssertEquals(t, "golang", sg.Name)
 	th.AssertEquals(t, "13551d6b-755d-4757-b956-536f674975c0", sg.ID)
 
 }
