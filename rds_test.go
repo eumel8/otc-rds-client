@@ -5,8 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	fake1 "github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/common"
-	fake2 "github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/common"
+	fake "github.com/opentelekomcloud/gophertelekomcloud/testhelper/client"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/subnets"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/networking/v1/vpcs"
@@ -126,15 +125,148 @@ const VpcListResponse = `
     ]
 }
 `
+const RdsGetResponse = `
+{
+	"instances": [{
+		"id": "ed7cc6166ec24360a5ed5c5c9c2ed726in01",
+		"status": "ACTIVE",
+		"name": "default",
+		"port": 3306,
+		"type": "Single",
+		"region": "eu-de",
+		"datastore": {
+			"type": "MySQL",
+			"version": "5.7"
+		},
+		"created": "2018-08-20T02:33:49+0800",
+		"updated": "2018-08-20T02:33:50+0800",
+		"volume": {
+			"type": "ULTRAHIGH",
+			"size": 100
+		},
+		"nodes": [{
+			"id": "06f1c2ad57604ae89e153e4d27f4e4b8no01",
+			"name": "mysql-0820-022709-01_node0",
+			"role": "master",
+			"status": "ACTIVE",
+			"availability_zone": "eu-de-01"
+		}],
+		"private_ips": ["192.168.0.142"],
+		"public_ips": ["10.154.219.187", "10.154.219.186"],
+		"db_user_name": "root",
+		"vpc_id": "b21630c1-e7d3-450d-907d-39ef5f445ae7",
+		"subnet_id": "45557a98-9e17-4600-8aec-999150bc4eef",
+		"security_group_id": "38815c5c-482b-450a-80b6-0a301f2afd97",
+		"flavor_ref": "rds.mysql.s1.large",
+		"switch_strategy": "",
+		"backup_strategy": {
+			"start_time": "19:00-20:00",
+			"keep_days": 7
+		},
+		"maintenance_window": "02:00-06:00",
+		"related_instance": [],
+		"disk_encryption_id": "",
+		"time_zone": ""
+	}, {
+		"id": "ed7cc6166ec24360a5ed5c5c9c2ed726in02",
+		"status": "ACTIVE",
+		"name": "mysql-0820-022709-02",
+		"port": 3306,
+		"type": "Single",
+		"region": "eu-de",
+		"datastore": {
+			"type": "MySQL",
+			"version": "5.6"
+		},
+		"created": "2019-08-20T02:33:49+0800",
+		"updated": "2019-08-20T02:33:50+0800",
+		"volume": {
+			"type": "ULTRAHIGH",
+			"size": 100
+		},
+		"nodes": [{
+			"id": "06f1c2ad57604ae89e153e4d27f4e4b8no01",
+			"name": "mysql-0820-022709-01_node0",
+			"role": "master",
+			"status": "ACTIVE",
+			"availability_zone": "eu-de-01"
+		}],
+		"private_ips": ["192.168.0.142"],
+		"public_ips": ["10.154.219.187", "10.154.219.186"],
+		"db_user_name": "root",
+		"vpc_id": "b21630c1-e7d3-450d-907d-39ef5f445ae7",
+		"subnet_id": "45557a98-9e17-4600-8aec-999150bc4eef",
+		"security_group_id": "38815c5c-482b-450a-80b6-0a301f2afd97",
+		"flavor_ref": "rds.mysql.s1.large",
+		"switch_strategy": "",
+		"backup_strategy": {
+			"start_time": "19:00-20:00",
+			"keep_days": 7
+		},
+		"maintenance_window": "02:00-06:00",
+		"related_instance": [],
+		"disk_encryption_id": "",
+		"time_zone": ""
+	}],
+	"total_count": 2
+}
+`
+
+const RdsGetResponseSingle = `
+{
+	"instances": [{
+		"id": "ed7cc6166ec24360a5ed5c5c9c2ed726in01",
+		"status": "ACTIVE",
+		"name": "default",
+		"port": 3306,
+		"type": "Single",
+		"region": "eu-de",
+		"datastore": {
+			"type": "MySQL",
+			"version": "5.7"
+		},
+		"created": "2018-08-20T02:33:49+0800",
+		"updated": "2018-08-20T02:33:50+0800",
+		"volume": {
+			"type": "ULTRAHIGH",
+			"size": 100
+		},
+		"nodes": [{
+			"id": "06f1c2ad57604ae89e153e4d27f4e4b8no01",
+			"name": "mysql-0820-022709-01_node0",
+			"role": "master",
+			"status": "ACTIVE",
+			"availability_zone": "eu-de-01"
+		}],
+		"private_ips": ["192.168.0.142"],
+		"public_ips": ["10.154.219.187", "10.154.219.186"],
+		"db_user_name": "root",
+		"vpc_id": "b21630c1-e7d3-450d-907d-39ef5f445ae7",
+		"subnet_id": "45557a98-9e17-4600-8aec-999150bc4eef",
+		"security_group_id": "38815c5c-482b-450a-80b6-0a301f2afd97",
+		"flavor_ref": "rds.mysql.s1.large",
+		"switch_strategy": "",
+		"backup_strategy": {
+			"start_time": "19:00-20:00",
+			"keep_days": 7
+		},
+		"maintenance_window": "02:00-06:00",
+		"related_instance": [],
+		"disk_encryption_id": "",
+		"time_zone": ""
+	}],
+	"total_count": 1
+}
+`
 
 func Test_secgroupGet(t *testing.T) {
 
 	th.SetupHTTP()
 	defer th.TeardownHTTP()
 
-	th.Mux.HandleFunc("/v2.0/security-groups", func(w http.ResponseWriter, r *http.Request) {
+	th.Mux.HandleFunc("/security-groups", func(w http.ResponseWriter, r *http.Request) {
 		th.TestMethod(t, r, "GET")
-		th.TestHeader(t, r, "X-Auth-Token", fake2.TokenID)
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -142,7 +274,7 @@ func Test_secgroupGet(t *testing.T) {
 		_, _ = fmt.Fprint(w, SecurityGroupListResponse)
 	})
 
-	sg, err := secgroupGet(fake2.ServiceClient(),  &groups.ListOpts{Name: "default"})
+	sg, err := secgroupGet(fake.ServiceClient(),  &groups.ListOpts{Name: "default"})
 	th.AssertNoErr(t, err)
 
 	th.AssertEquals(t, "default", sg.Name)
@@ -155,9 +287,9 @@ func Test_subnetGet(t *testing.T) {
 	th.SetupHTTP()
 	defer th.TeardownHTTP()
 
-	th.Mux.HandleFunc("/v1/85636478b0bd8e67e89469c7749d4127/subnets", func(w http.ResponseWriter, r *http.Request) {
+	th.Mux.HandleFunc("/subnets", func(w http.ResponseWriter, r *http.Request) {
 		th.TestMethod(t, r, "GET")
-		th.TestHeader(t, r, "X-Auth-Token", fake1.TokenID)
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -165,7 +297,7 @@ func Test_subnetGet(t *testing.T) {
 		_, _ = fmt.Fprint(w, SubnetListResponse)
 	})
 
-	sg, err := subnetGet(fake1.ServiceClient(),  &subnets.ListOpts{Name: "default"})
+	sg, err := subnetGet(fake.ServiceClient(),  &subnets.ListOpts{Name: "default"})
 	th.AssertNoErr(t, err)
 
 	th.AssertEquals(t, "default", sg.Name)
@@ -178,9 +310,9 @@ func Test_vpcGet(t *testing.T) {
 	th.SetupHTTP()
 	defer th.TeardownHTTP()
 
-	th.Mux.HandleFunc("/v1/85636478b0bd8e67e89469c7749d4127/vpcs", func(w http.ResponseWriter, r *http.Request) {
+	th.Mux.HandleFunc("/vpcs", func(w http.ResponseWriter, r *http.Request) {
 		th.TestMethod(t, r, "GET")
-		th.TestHeader(t, r, "X-Auth-Token", fake1.TokenID)
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -188,11 +320,34 @@ func Test_vpcGet(t *testing.T) {
 		_, _ = fmt.Fprint(w, VpcListResponse)
 	})
 
-	sg, err := vpcGet(fake1.ServiceClient(),  &vpcs.ListOpts{Name: "default"})
+	sg, err := vpcGet(fake.ServiceClient(),  &vpcs.ListOpts{Name: "default"})
 	th.AssertNoErr(t, err)
 
 	th.AssertEquals(t, "default", sg.Name)
 	th.AssertEquals(t, "13551d6b-755d-4757-b956-536f674975c0", sg.ID)
+
+}
+
+func Test_rdsGet(t *testing.T) {
+
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	th.Mux.HandleFunc("/instances", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "GET")
+		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		_, _ = fmt.Fprint(w, RdsGetResponse)
+	})
+
+	sg, err := rdsGet(fake.ServiceClient(), "ed7cc6166ec24360a5ed5c5c9c2ed726in01")
+	th.AssertNoErr(t, err)
+
+	th.AssertEquals(t, "default", sg.Name)
+	th.AssertEquals(t, "ed7cc6166ec24360a5ed5c5c9c2ed726in01", sg.Id)
 
 }
 
