@@ -153,6 +153,14 @@ ha mode: `async|semisync` (MySQL) `async|sync` (PostgreSQL) hint: no single inst
 refer [OTC API DOC](https://docs.otc.t-systems.com/api/rds/rds_01_0002.html)
 
 
+## Test coverage
+
+```bash
+go test -coverprofile=c.out
+go tool cover -func=c.out
+go tool cover -html=c.out
+```
+
 ## Credits
 
 Frank Kloeker f.kloeker@telekom.de
