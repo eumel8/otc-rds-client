@@ -120,7 +120,7 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 	return &n.Instances[0], nil
 }
 
-func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts) {
+func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts) (error) {
 
 	var c conf
 	c.getConf()
@@ -189,7 +189,7 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 		klog.Exitf("error getting rds state: %v", err)
 	}
 
-	return
+	return nil
 }
 
 func (c *conf) getConf() *conf {
