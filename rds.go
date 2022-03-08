@@ -18,6 +18,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
+var osExit = os.Exit
+
 const (
 	AppVersion = "0.0.4"
 	RdsYaml    = "rds.yaml"
@@ -120,7 +122,7 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 	return &n.Instances[0], nil
 }
 
-func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts) (error) {
+func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts) error {
 
 	var c conf
 	c.getConf()
@@ -216,12 +218,14 @@ func main() {
 
 	if *help {
 		fmt.Println("Provide ENV variable to connect OTC: OS_PROJECT_NAME, OS_REGION_NAME, OS_AUTH_URL, OS_IDENTITY_API_VERSION, OS_USER_DOMAIN_NAME, OS_USERNAME, OS_PASSWORD")
-		os.Exit(0)
+		osExit(0)
+		return
 	}
 
 	if *version {
 		fmt.Println("version", AppVersion)
-		os.Exit(0)
+		osExit(0)
+		return
 	}
 
 	if os.Getenv("OS_AUTH_URL") == "" {

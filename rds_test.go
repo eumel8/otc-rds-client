@@ -1,8 +1,14 @@
 package main
 
 import (
+	// "bou.ke/monkey"
+	// "bytes"
 	"fmt"
+	"flag"
+	// "io"
 	"net/http"
+	"os"
+	// "runtime"
 	"testing"
 
 	"github.com/opentelekomcloud/gophertelekomcloud/acceptance/tools"
@@ -515,14 +521,51 @@ func Test_rdsCreate(t *testing.T) {
 }
 
 func Test_main(t *testing.T) {
-	tests := []struct {
-		name string
+	testCases := []struct {
+		name     string
+		flags    []string
+		expected int
 	}{
-		// TODO: Add test cases.
+		{"help_exit_0", []string{"-help"}, 0},
+		{"version_exit_0", []string{"-version"}, 0},
+//		{"no_command_given", []string{}, 1},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run("test "+tc.name, func(t *testing.T) {
+			// Override os.Exit temporarily
+			oldOsExit := osExit
+			defer func() {
+				osExit = oldOsExit
+			}()
+
+			var got int
+			tmpExit := func(code int) {
+				got = code
+			}
+
+			osExit = tmpExit
+
+			flag.CommandLine = flag.NewFlagSet(tc.name, flag.ExitOnError)
+			os.Args = append([]string{tc.name}, tc.flags...)
+
 			main()
+			if got != tc.expected {
+				t.Errorf("Expected exit code: %d, got: %d", tc.expected, got)
+			}
 		})
 	}
 }
+/*
+	err := os.Setenv("OS_AUTH_URL", "")
+	th.AssertNoErr(t, err)
+	err = os.Setenv("OS_USERNAME", "")
+	th.AssertNoErr(t, err)
+	err = os.Setenv("OS_PASSWORD", "")
+	th.AssertNoErr(t, err)
+
+	version := "0.0.4"
+	fmt.Printf("'%v'\n", version)
+	th.AssertNoErr(t, err)
+	os.Exit(t.Run())
+}
+*/
