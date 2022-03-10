@@ -10,6 +10,7 @@ import (
 	"os"
 	// "runtime"
 	"testing"
+	// "github.com/stretchr/testify/require"
 
 	"github.com/opentelekomcloud/gophertelekomcloud/acceptance/tools"
 	fake "github.com/opentelekomcloud/gophertelekomcloud/testhelper/client"
@@ -133,6 +134,24 @@ const VpcListResponse = `
     ]
 }
 `
+const ProviderGetResponse = `
+{
+	"version": {
+		"media-types": [{
+			"type": "application/vnd.openstack.identity-v3+json",
+			"base": "application/json"
+		}],
+		"links": [{
+			"rel": "self",
+			"href": "https://iam.eu-de.otc.t-systems.com/v3/"
+		}],
+		"id": "v3.6",
+		"updated": "2016-04-04T00:00:00Z",
+		"status": "stable"
+	}
+}
+`
+
 const RdsGetResponse = `
 {
 	"instances": [{
@@ -328,88 +347,49 @@ const RdsJobResponse = `
 }
 `
 func Test_secgroupGet(t *testing.T) {
-
 	th.SetupHTTP()
 	defer th.TeardownHTTP()
 
-	th.Mux.HandleFunc("/security-groups", func(w http.ResponseWriter, r *http.Request) {
-		th.TestMethod(t, r, "GET")
-		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
-
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		_, _ = fmt.Fprint(w, SecurityGroupListResponse)
-	})
+	MockRdsResponse(t)
 
 	sg, err := secgroupGet(fake.ServiceClient(),  &groups.ListOpts{Name: "default"})
 	th.AssertNoErr(t, err)
 
 	th.AssertEquals(t, "default", sg.Name)
 	th.AssertEquals(t, "85cc3048-abc3-43cc-89b3-377341426ac5", sg.ID)
-
 }
 
 func Test_subnetGet(t *testing.T) {
-
 	th.SetupHTTP()
 	defer th.TeardownHTTP()
 
-	th.Mux.HandleFunc("/subnets", func(w http.ResponseWriter, r *http.Request) {
-		th.TestMethod(t, r, "GET")
-		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
-
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		_, _ = fmt.Fprint(w, SubnetListResponse)
-	})
+	MockRdsResponse(t)
 
 	sg, err := subnetGet(fake.ServiceClient(),  &subnets.ListOpts{Name: "golang"})
 	th.AssertNoErr(t, err)
 
 	th.AssertEquals(t, "golang", sg.Name)
 	th.AssertEquals(t, "011fc878-5521-4654-a1ad-f5b0b5820302", sg.ID)
-
 }
 
 func Test_vpcGet(t *testing.T) {
-
 	th.SetupHTTP()
 	defer th.TeardownHTTP()
 
-	th.Mux.HandleFunc("/vpcs", func(w http.ResponseWriter, r *http.Request) {
-		th.TestMethod(t, r, "GET")
-		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
-
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		_, _ = fmt.Fprint(w, VpcListResponse)
-	})
+	MockRdsResponse(t)
 
 	sg, err := vpcGet(fake.ServiceClient(),  &vpcs.ListOpts{Name: "golang"})
 	th.AssertNoErr(t, err)
 
 	th.AssertEquals(t, "golang", sg.Name)
 	th.AssertEquals(t, "13551d6b-755d-4757-b956-536f674975c0", sg.ID)
-
 }
 
 func Test_rdsGet(t *testing.T) {
-
 	th.SetupHTTP()
 	defer th.TeardownHTTP()
 
-	th.Mux.HandleFunc("/instances", func(w http.ResponseWriter, r *http.Request) {
-		th.TestMethod(t, r, "GET")
-		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
-
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		_, _ = fmt.Fprint(w, RdsGetResponse)
-	})
+	MockRdsResponse(t)
 
 	sg, err := rdsGet(fake.ServiceClient(), "ed7cc6166ec24360a5ed5c5c9c2ed726in01")
 	th.AssertNoErr(t, err)
@@ -417,11 +397,9 @@ func Test_rdsGet(t *testing.T) {
 	th.AssertEquals(t, "default", sg.Name)
 	th.AssertEquals(t, "ed7cc6166ec24360a5ed5c5c9c2ed726in01", sg.Id)
 	tools.PrintResource(t, sg)
-
 }
 
 func MockRdsResponse(t *testing.T) {
-
 	th.Mux.HandleFunc("/instances", func(w http.ResponseWriter, r *http.Request) {
 		th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
 		switch r.Method {
@@ -435,14 +413,6 @@ func MockRdsResponse(t *testing.T) {
 			_, _ = fmt.Fprint(w, RdsCreateResponse)
 		}
 	})
-}
-
-func Test_rdsCreate(t *testing.T) {
-
-	th.SetupHTTP()
-	defer th.TeardownHTTP()
-
-	MockRdsResponse(t)
 
 	th.Mux.HandleFunc("/security-groups", func(w http.ResponseWriter, r *http.Request) {
 		th.TestMethod(t, r, "GET")
@@ -483,6 +453,13 @@ func Test_rdsCreate(t *testing.T) {
 
 		_, _ = fmt.Fprint(w, RdsJobResponse)
 	})
+}
+
+func Test_rdsCreate(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	MockRdsResponse(t)
 
 	RdsCreateOpts := &instances.CreateRdsOpts{
 		Name:             "default",
@@ -514,13 +491,10 @@ func Test_rdsCreate(t *testing.T) {
 	err := rdsCreate(fake.ServiceClient(), fake.ServiceClient(), fake.ServiceClient(), RdsCreateOpts)
 	th.AssertNoErr(t, err)
 
-	//th.AssertEquals(t, "default", sg.Name)
-	//th.AssertEquals(t, "ed7cc6166ec24360a5ed5c5c9c2ed726in01", sg.Id)
-	//tools.PrintResource(t, sg)
-
+	// tools.PrintResource(t, sg)
 }
 
-func Test_main(t *testing.T) {
+func Test_flags(t *testing.T) {
 	testCases := []struct {
 		name     string
 		flags    []string
@@ -528,11 +502,10 @@ func Test_main(t *testing.T) {
 	}{
 		{"help_exit_0", []string{"-help"}, 0},
 		{"version_exit_0", []string{"-version"}, 0},
-//		{"no_command_given", []string{}, 1},
 	}
 	for _, tc := range testCases {
 		t.Run("test "+tc.name, func(t *testing.T) {
-			// Override os.Exit temporarily
+
 			oldOsExit := osExit
 			defer func() {
 				osExit = oldOsExit
@@ -548,13 +521,58 @@ func Test_main(t *testing.T) {
 			flag.CommandLine = flag.NewFlagSet(tc.name, flag.ExitOnError)
 			os.Args = append([]string{tc.name}, tc.flags...)
 
+			err := os.Setenv("OS_AUTH_URL", "")
+			th.AssertNoErr(t, err)
+
 			main()
+
 			if got != tc.expected {
 				t.Errorf("Expected exit code: %d, got: %d", tc.expected, got)
 			}
 		})
 	}
 }
+
+func Test_getProvider(t *testing.T) {
+	th.SetupHTTP()
+	defer th.TeardownHTTP()
+
+	th.Mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		th.TestMethod(t, r, "POST")
+		// th.TestHeader(t, r, "X-Auth-Token", fake.TokenID)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+
+		_, _ = fmt.Fprint(w, ProviderGetResponse)
+	})
+	err := os.Setenv("OS_USERNAME", "hiller")
+	th.AssertNoErr(t, err)
+	err = os.Setenv("OS_USER_DOMAIN_NAME", "hiller")
+	th.AssertNoErr(t, err)
+	err = os.Setenv("OS_PASSWORD", "hiller")
+	th.AssertNoErr(t, err)
+	err = os.Setenv("OS_IDENTITY_API_VERSION", "3")
+	th.AssertNoErr(t, err)
+	err = os.Setenv("OS_AUTH_URL", th.Endpoint() + "v3")
+	th.AssertNoErr(t, err)
+	sg := getProvider()
+	// th.AssertNoErr(t, err)
+
+	// th.AssertEquals(t, "stable", sg.version)
+	//th.AssertEquals(t, "ed7cc6166ec24360a5ed5c5c9c2ed726in01", sg.Id)
+	tools.PrintResource(t, sg)
+}
+
+
+// func Test_GO_ENVUnitTest(t *testing.T) {
+// 	r := require.New(t)
+// 	r.Zero(os.Getenv("OS_AUTH_URL"))
+// 	//r.Equal("test", Get("OS_AUTH_URL", "foo"))
+// }
+
+func Test_main(t *testing.T) {
+	//main()
 /*
 	err := os.Setenv("OS_AUTH_URL", "")
 	th.AssertNoErr(t, err)
@@ -567,5 +585,5 @@ func Test_main(t *testing.T) {
 	fmt.Printf("'%v'\n", version)
 	th.AssertNoErr(t, err)
 	os.Exit(t.Run())
-}
 */
+}

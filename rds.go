@@ -20,6 +20,8 @@ import (
 
 var osExit = os.Exit
 
+//var getenv = os.Getenv
+
 const (
 	AppVersion = "0.0.4"
 	RdsYaml    = "rds.yaml"
@@ -209,24 +211,8 @@ func (c *conf) getConf() *conf {
 	return c
 }
 
-func main() {
-
-	version := flag.Bool("version", false, "app version")
-	help := flag.Bool("help", false, "print out the help")
-
-	flag.Parse()
-
-	if *help {
-		fmt.Println("Provide ENV variable to connect OTC: OS_PROJECT_NAME, OS_REGION_NAME, OS_AUTH_URL, OS_IDENTITY_API_VERSION, OS_USER_DOMAIN_NAME, OS_USERNAME, OS_PASSWORD")
-		osExit(0)
-		return
-	}
-
-	if *version {
-		fmt.Println("version", AppVersion)
-		osExit(0)
-		return
-	}
+// func (p *golangsdk.ProviderClient) getProvider() *golangsdk.ProviderClient {
+func getProvider() *golangsdk.ProviderClient {
 
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
@@ -262,7 +248,29 @@ func main() {
 			},
 		}
 	}
+	return provider
+}
 
+func main() {
+
+	version := flag.Bool("version", false, "app version")
+	help := flag.Bool("help", false, "print out the help")
+
+	flag.Parse()
+
+	if *help {
+		fmt.Println("Provide ENV variable to connect OTC: OS_PROJECT_NAME, OS_REGION_NAME, OS_AUTH_URL, OS_IDENTITY_API_VERSION, OS_USER_DOMAIN_NAME, OS_USERNAME, OS_PASSWORD")
+		osExit(0)
+		return
+	}
+
+	if *version {
+		fmt.Println("version", AppVersion)
+		osExit(0)
+		return
+	}
+
+	provider := getProvider()
 	network1, err := openstack.NewNetworkV1(provider, golangsdk.EndpointOpts{})
 	network2, err := openstack.NewNetworkV2(provider, golangsdk.EndpointOpts{})
 	rds, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
