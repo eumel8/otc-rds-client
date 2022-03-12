@@ -80,6 +80,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull
           mv coverage.html index.html
           git add index.html
           git commit -m "chore: Updated coverage page."

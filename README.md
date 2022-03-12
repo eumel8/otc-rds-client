@@ -1,5 +1,5 @@
 # otc-rds-client
-![Coverage](https://img.shields.io/badge/Coverage-67.7%25-yellow)
+![Coverage](https://img.shields.io/badge/Coverage-67.6%25-yellow)
 
 creates rds ha instances in OTC tenant based on `rds.yaml`
 
