@@ -1,5 +1,5 @@
 # otc-rds-client
-![Coverage](https://img.shields.io/badge/Coverage-67.7%25-yellow) 
+![Coverage](https://img.shields.io/badge/Coverage-67.7%25-yellow)
 
 [Code Coverage Details](https://eumel8.github.io/otc-rds-client/coverage.html)
 
