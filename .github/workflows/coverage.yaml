@@ -6,7 +6,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Update coverage badge
+    name: Coverage test & badges
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -28,7 +28,14 @@ jobs:
 
       - name: Run Test (html)
         run:
-          go test -v ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
+          go test -v ./... -coverprofile=coverage.out && go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload coverage file in artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifact
+          path: coverage.html
+          retention-days: 5
 
       - name: Run Test (count)
         run:
