@@ -58,36 +58,19 @@ jobs:
         uses: tj-actions/verify-changed-files@v8.1
         id: verify-changed-files
         with:
-          files: README.md
+          files: README.md coverage.html
 
-      - name: Commit badge changes
+      - name: Commit changes
         if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add README.md
+          git add README.md coverage.html
           git commit -m "chore: Updated coverage badge."
 
-      - name: Push badge changes
+      - name: Push changes
         if: steps.verify-changed-files.outputs.files_changed == 'true'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ github.token }}
           branch: unittests
-
-      - name: Commit gh-pages changes
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git pull
-          mv coverage.html index.html
-          git add index.html
-          git commit -m "chore: Updated coverage page."
-
-      - name: Push gh-pages changes
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ github.token }}
-          branch: gh-pages
