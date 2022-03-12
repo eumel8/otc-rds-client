@@ -26,7 +26,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Run Test
+      - name: Run Test (html)
+        run:
+          go test -v ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
+
+      - name: Run Test (count)
         run:
           go test -v ./... -covermode=count -coverprofile=coverage.out
 
