@@ -81,7 +81,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           mv coverage.html index.html
-          git index.html
+          git add index.html
           git commit -m "chore: Updated coverage page."
 
       - name: Push gh-pages changes
