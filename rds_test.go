@@ -273,6 +273,8 @@ func Test_flags(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run("test "+tc.name, func(t *testing.T) {
 
+			// prvent os.Exit exit here
+			// https://stackoverflow.com/questions/40615641/testing-os-exit-scenarios-in-go-with-coverage-information-coveralls-io-goverall
 			oldOsExit := osExit
 			defer func() {
 				osExit = oldOsExit
