@@ -1,0 +1,53 @@
+diff --git a/provider_client.go b/provider_client.go
+index f4e75f09..008e8d1f 100644
+--- a/provider_client.go
++++ b/provider_client.go
+@@ -3,6 +3,7 @@ package golangsdk
+ import (
+ 	"bytes"
+ 	"encoding/json"
++	"fmt"
+ 	"io"
+ 	"io/ioutil"
+ 	"net/http"
+@@ -214,6 +215,8 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts)
+ 		return nil, err
+ 	}
+ 
++	// req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
++
+ 	// Populate the request headers. Apply options.MoreHeaders last, to give the caller the chance to
+ 	// modify or omit any header.
+ 	if contentType != nil {
+@@ -401,6 +404,11 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts)
+ 
+ 		return resp, err
+ 	}
++	// ioHeader, _ := ioutil.ReadAll(resp.Header)
++	ioBody, _ := ioutil.ReadAll(resp.Body)
++	fmt.Println(resp.Header)
++	resJson, _ := PrettyJson(string(ioBody))
++	fmt.Println(resJson)
+ 
+ 	// Parse the response body as JSON, if requested to do so.
+ 	if options.JSONResponse != nil {
+@@ -410,6 +418,7 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts)
+ 		}
+ 	}
+ 
++
+ 	return resp, nil
+ }
+ 
+@@ -428,3 +437,11 @@ func defaultOkCodes(method string) []int {
+ 	}
+ 	return []int{}
+ }
++
++func PrettyJson(str string) (string, error) {
++    var prettyJSON bytes.Buffer
++    if err := json.Indent(&prettyJSON, []byte(str), "", "    "); err != nil {
++        return "", err
++    }
++    return prettyJSON.String(), nil
++}

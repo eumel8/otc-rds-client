@@ -18,9 +18,12 @@ import (
 	"k8s.io/klog/v2"
 )
 
-var osExit = os.Exit
-
-//var getenv = os.Getenv
+var (
+	osExit = os.Exit
+	create *bool
+	help *bool
+	version *bool
+)
 
 const (
 	AppVersion = "0.0.4"
@@ -63,8 +66,13 @@ type Volume struct {
 	Size int    `json:"size" required:"true"`
 }
 
-func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
+func init() {
+	create = flag.Bool("create", false, "create RDS instance")
+	help = flag.Bool("help", false, "program help")
+	version = flag.Bool("version", false, "version of the program")
+}
 
+func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*groups.SecGroup, error) {
 	pages, err := groups.List(client, *opts).AllPages()
 	if err != nil {
 		return nil, err
@@ -78,7 +86,6 @@ func secgroupGet(client *golangsdk.ServiceClient, opts *groups.ListOpts) (*group
 }
 
 func subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnets.Subnet, error) {
-
 	n, err := subnets.List(client, *opts)
 	if err != nil {
 		return nil, err
@@ -91,7 +98,6 @@ func subnetGet(client *golangsdk.ServiceClient, opts *subnets.ListOpts) (*subnet
 }
 
 func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, error) {
-
 	n, err := vpcs.List(client, *opts)
 	if err != nil {
 		return nil, err
@@ -105,7 +111,6 @@ func vpcGet(client *golangsdk.ServiceClient, opts *vpcs.ListOpts) (*vpcs.Vpc, er
 }
 
 func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, error) {
-
 	listOpts := instances.ListRdsInstanceOpts{
 		Id: rdsId,
 	}
@@ -125,7 +130,6 @@ func rdsGet(client *golangsdk.ServiceClient, rdsId string) (*instances.RdsInstan
 }
 
 func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.ServiceClient, client *golangsdk.ServiceClient, opts *instances.CreateRdsOpts) error {
-
 	var c conf
 	c.getConf()
 
@@ -197,7 +201,6 @@ func rdsCreate(netclient1 *golangsdk.ServiceClient, netclient2 *golangsdk.Servic
 }
 
 func (c *conf) getConf() *conf {
-
 	yfile, err := ioutil.ReadFile(RdsYaml)
 	if err != nil {
 		klog.Exitf("error reading yaml file: %v", err)
@@ -211,9 +214,7 @@ func (c *conf) getConf() *conf {
 	return c
 }
 
-// func (p *golangsdk.ProviderClient) getProvider() *golangsdk.ProviderClient {
 func getProvider() *golangsdk.ProviderClient {
-
 	if os.Getenv("OS_AUTH_URL") == "" {
 		os.Setenv("OS_AUTH_URL", "https://iam.eu-de.otc.t-systems.com:443/v3")
 	}
@@ -251,11 +252,7 @@ func getProvider() *golangsdk.ProviderClient {
 	return provider
 }
 
-func main() {
-
-	version := flag.Bool("version", false, "app version")
-	help := flag.Bool("help", false, "print out the help")
-
+func getFlags() {
 	flag.Parse()
 
 	if *help {
@@ -269,17 +266,52 @@ func main() {
 		osExit(0)
 		return
 	}
+	if *create {
+		fmt.Println("version", AppVersion)
+		Create()
+		return
+	return
+	}
+}
 
+func Create() {
 	provider := getProvider()
+
 	network1, err := openstack.NewNetworkV1(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		klog.Exitf("unable to initialize network v1 client: %v", err)
+		return
+	}
 	network2, err := openstack.NewNetworkV2(provider, golangsdk.EndpointOpts{})
+	if err != nil {
+		klog.Exitf("unable to initialize network v2 client: %v", err)
+		return
+	}
 	rds, err := openstack.NewRDSV3(provider, golangsdk.EndpointOpts{})
 	if err != nil {
 		klog.Exitf("unable to initialize rds client: %v", err)
+		return
 	}
+	/* Debug outout of the ProviderClient response
+
+	git clone https://github.com/opentelekomcloud/gophertelekomcloud.git
+	cd gophercloud
+	git patch ../provider_client.go.patch
+	cd ..
+	go mod edit -replace=github.com/opentelekomcloud/gophertelekomcloud=./gophertelekomcloud
+
+	fmt.Println("network1:", network1)
+	fmt.Printf("%+v\n", network1.ProviderClient)
+	*/
 
 	rdsCreate(network1, network2, rds, &instances.CreateRdsOpts{})
 	if err != nil {
 		klog.Exitf("rds creating failed: %v", err)
+		return
 	}
+	return
+}
+
+func main() {
+	getFlags()
 }
