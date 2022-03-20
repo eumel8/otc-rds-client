@@ -155,7 +155,19 @@ func MockMuxer() {
 	})
 
 	fmt.Println("Listening...")
-	http.ListenAndServe("127.0.0.1:50000", mux)
+
+	var retries int = 3
+
+	for retries > 0 {
+		err := http.ListenAndServe("127.0.0.1:50000", mux)
+		if err != nil {
+			fmt.Println("Restart http server ... ", err)
+			retries -= 1
+		} else {
+			break
+		}
+	}
+
 }
 
 func MockRdsResponse(t *testing.T) {
@@ -288,9 +300,7 @@ func Test_flags(t *testing.T) {
 			osExit = tmpExit
 
 			// flag.CommandLine = flag.NewFlagSet(tc.name, flag.ExitOnError)
-			//os.Args = append([]string{tc.name}, tc.flags...)
 			os.Args = append([]string{tc.name}, tc.flags...)
-			fmt.Println("OS ARGS: ", os.Args)
 
 			err := os.Setenv("OS_AUTH_URL", "")
 			th.AssertNoErr(t, err)
@@ -338,6 +348,29 @@ func PrettyJson(str string) (string, error) {
 }
 
 func Test_main(t *testing.T) {
+	oldOsExit := osExit
+	defer func() {
+		osExit = oldOsExit
+	}()
+
+	var got int
+	tmpExit := func(code int) {
+		got = code
+	}
+
+	osExit = tmpExit
+
+	err := os.Setenv("OS_AUTH_URL", "")
+	th.AssertNoErr(t, err)
+
+	main()
+
+	if got != 0 {
+		t.Errorf("Expected exit code: %d", got)
+	}
+}
+
+func Test_Create(t *testing.T) {
 	go MockMuxer()
 
 	err := os.Setenv("OS_USERNAME", "test")
