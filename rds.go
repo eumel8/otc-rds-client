@@ -252,26 +252,25 @@ func getProvider() *golangsdk.ProviderClient {
 	return provider
 }
 
-func getFlags() {
+func getFlags(cliFullArg string) {
 	flag.Parse()
 
-	if *help {
+	if *help || cliFullArg == " -help " {
 		fmt.Println("Provide ENV variable to connect OTC: OS_PROJECT_NAME, OS_REGION_NAME, OS_AUTH_URL, OS_IDENTITY_API_VERSION, OS_USER_DOMAIN_NAME, OS_USERNAME, OS_PASSWORD")
 		osExit(0)
-		return
 	}
 
-	if *version {
+	if *version || cliFullArg == " -version " {
 		fmt.Println("version", AppVersion)
 		osExit(0)
-		return
 	}
-	if *create {
+
+	if *create || cliFullArg == " -create " {
 		fmt.Println("version", AppVersion)
 		Create()
-		return
-	return
 	}
+
+	return
 }
 
 func Create() {
@@ -292,7 +291,7 @@ func Create() {
 		klog.Exitf("unable to initialize rds client: %v", err)
 		return
 	}
-	/* Debug outout of the ProviderClient response
+	/* Debug output of the ProviderClient response
 
 	git clone https://github.com/opentelekomcloud/gophertelekomcloud.git
 	cd gophercloud
@@ -313,5 +312,5 @@ func Create() {
 }
 
 func main() {
-	getFlags()
+	getFlags("default")
 }

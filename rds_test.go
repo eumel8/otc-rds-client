@@ -273,7 +273,7 @@ func Test_flags(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run("test "+tc.name, func(t *testing.T) {
 
-			// prvent os.Exit exit here
+			// prevent os.Exit exit here
 			// https://stackoverflow.com/questions/40615641/testing-os-exit-scenarios-in-go-with-coverage-information-coveralls-io-goverall
 			oldOsExit := osExit
 			defer func() {
@@ -288,12 +288,14 @@ func Test_flags(t *testing.T) {
 			osExit = tmpExit
 
 			// flag.CommandLine = flag.NewFlagSet(tc.name, flag.ExitOnError)
+			//os.Args = append([]string{tc.name}, tc.flags...)
 			os.Args = append([]string{tc.name}, tc.flags...)
+			fmt.Println("OS ARGS: ", os.Args)
 
 			err := os.Setenv("OS_AUTH_URL", "")
 			th.AssertNoErr(t, err)
 
-			getFlags()
+			getFlags(os.Args[1])
 
 			if got != tc.expected {
 				t.Errorf("Expected exit code: %d, got: %d", tc.expected, got)
