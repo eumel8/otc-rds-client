@@ -1,4 +1,7 @@
 # otc-rds-client
+![Coverage](https://img.shields.io/badge/Coverage-70.5%25-brightgreen)
+
+[Code Coverage Details](https://eumel8.github.io/otc-rds-client/coverage.html)
 
 creates rds ha instances in OTC tenant based on `rds.yaml`
 
@@ -151,6 +154,14 @@ ha mode: `async|semisync` (MySQL) `async|sync` (PostgreSQL) hint: no single inst
 
 refer [OTC API DOC](https://docs.otc.t-systems.com/api/rds/rds_01_0002.html)
 
+
+## Test coverage
+
+```bash
+go test -coverprofile=c.out
+go tool cover -func=c.out
+go tool cover -html=c.out
+```
 
 ## Credits
 
