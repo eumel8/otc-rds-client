@@ -1,7 +1,9 @@
 # https://github.com/marketplace/actions/go-release-binaries
 on:
-  release:
-    types: [created]
+  push:
+    branches: [ master ]
+#  release:
+#    types: [created]
 
 jobs:
   release-linux-amd64:
@@ -16,7 +18,7 @@ jobs:
             goos: windows
     steps:
     - uses: actions/checkout@v2
-    - uses: wangyoucao577/go-release-action@v1.22
+    - uses: wangyoucao577/go-release-action@v1.25
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
