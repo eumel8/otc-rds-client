@@ -1,0 +1,11 @@
+variables:
+  GITLAB_RUNNER: otc_run_docker_k8s_xl
+  REGISTRY: mtr.devops.telekom.de
+  REPO_NAME: mcsps/otc-rds-client
+  GITHUB_REPO: eumel8/otc-rds-client
+  GITHUB_BRANCH: master
+
+include:
+  - project: 'mcsps/gitlab-ci-templates'
+    ref: master
+    file: '/templates/.gitlab-ci-go.yml'
